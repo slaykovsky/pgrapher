@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 RUN_DIR=./run
 TMP=/tmp
