@@ -55,8 +55,9 @@ public class Grapher extends AbstractVerticle {
         initialData(ready -> {
             Router router = Router.router(vertx);
 
-            router.route("/static/*").handler(StaticHandler.create());
+//            router.route("/static/*").handler(StaticHandler.create());
             router.route().handler(BodyHandler.create());
+            router.route().handler(StaticHandler.create());
 
             router.route("/api/*").handler(ctx -> client.getConnection(res -> {
                 if (res.failed()) {
