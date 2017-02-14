@@ -5,6 +5,20 @@ RUN_DIR=./run
 TMP=/tmp
 PGRAPHER_API=http://pgrapher.slaykovsky.com/api/tests
 
+sudo apt-get install -qq -y --no-install-recommends \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    software-properties-common
+curl -fsSL https://apt.dockerproject.org/gpg | sudo apt-key add -
+apt-key fingerprint 58118E89F3A912897C070ADBF76221572C52609D
+sudo add-apt-repository -y \
+       "deb https://apt.dockerproject.org/repo/ \
+       ubuntu-$(lsb_release -cs) \
+       main"
+sudo apt update -y \
+    && sudo apt install -y sysbench docker-engine
+
 mkdir -p ${RUN_DIR}
 pushd ${RUN_DIR}
 
@@ -29,7 +43,7 @@ do
     echo "Performing OLTP test"
     test="oltp"
     result_file="${TMP}/${test}_${threads}_${run}.result"
-    docker run --name sysbenchdb \
+    sudo docker run --name sysbenchdb \
         -e MYSQL_DATABASE=sysbench \
         -e MYSQL_USER=sysbench \
         -e MYSQL_PASSWORD=sysbench \
@@ -55,8 +69,8 @@ do
         -d '{"hostname": "'${HOSTNAME}'", "test": "'${test}'", "threads": "'${threads}'", "run": "'${run}'", "result": "'${result}'"}' \
         ${PGRAPHER_API}
     rm -f ./test_file* ${result_file}
-    docker kill sysbenchdb
-    docker rm -f sysbenchdb
+    sudo docker kill sysbenchdb
+    sudo docker rm -f sysbenchdb
 
     echo "Performing CPU test #${run}"
     test="primes"
