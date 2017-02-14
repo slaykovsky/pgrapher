@@ -53,6 +53,7 @@ public class Grapher extends AbstractVerticle {
         client = JDBCClient.createShared(vertx, postgreSQLClientConfig);
         initialData(ready -> {
             Router router = Router.router(vertx);
+
             router.route("/static/*").handler(StaticHandler.create());
             router.route().handler(BodyHandler.create());
 
