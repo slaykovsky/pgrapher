@@ -52,14 +52,14 @@ do
         -d mysql:latest
     sleep 15
     sysbench --test=oltp --db-driver=mysql \
-        --oltp-table-size=40000000 \
+        --oltp-table-size=1000000 \
         --mysql-db=sysbench \
         --mysql-user=sysbench \
         --mysql-password=sysbench \
         --mysql-host=127.0.0.1 \
         --num-threads=${threads} prepare
     sysbench --test=oltp --db-driver=mysql \
-      --oltp-table-size=40000000 --mysql-db=sysbench \
+      --oltp-table-size=1000000 --mysql-db=sysbench \
       --mysql-user=sysbench --mysql-password=sysbench \
       --max-time=60 --max-requests=0 --mysql-host=127.0.0.1 \
       --num-threads=${threads} \

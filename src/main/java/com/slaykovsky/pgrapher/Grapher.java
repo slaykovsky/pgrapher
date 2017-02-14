@@ -12,22 +12,33 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
 public class Grapher extends AbstractVerticle {
-    final private String INIT_DB = "CREATE TABLE IF NOT EXISTS tests " +
+    private final String HEADER_CONTENT_TYPE = "content-type";
+    private final String HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
+    private final String APPLICATION_JSON = "application/json; charset=utf-8";
+    private final String STAR = "*";
+    private final String WEBROOT = "webroot";
+
+    private final String DATABASE_HOST = "database";
+    private final String DATABASE_NAME = "pgrapher";
+    private final String DATABASE_USER = "pgrapher";
+    private final String DATABASE_PASS = "pgrapher";
+
+    private final String INIT_DB = "CREATE TABLE IF NOT EXISTS tests " +
             "(id SERIAL, hostname TEXT, test TEXT, threads INT, run INT, result REAL)";
-    final private String SELECT_HOSTNAMES = "SELECT DISTINCT ON (hostname) hostname FROM tests";
-    final private String SELECT_TESTS = "SELECT hostname, test, threads, avg(result) " +
+    private final String SELECT_HOSTNAMES = "SELECT DISTINCT ON (hostname) hostname FROM tests";
+    private final String SELECT_TESTS = "SELECT hostname, test, threads, avg(result) " +
             "AS average_result FROM tests GROUP BY hostname, test, threads ORDER BY test";
-    final private String SELECT_ALL_HOSTNAME_TESTS = "SELECT test, threads, avg(result) AS average_result " +
+    private final String SELECT_ALL_HOSTNAME_TESTS = "SELECT test, threads, avg(result) AS average_result " +
             "FROM tests WHERE hostname = ? GROUP BY test, threads ORDER BY test";
-    final private String DELETE_TEST = "DELETE FROM tests WHERE id = ?";
-    final private String INSERT_TEST = "INSERT INTO tests (hostname, test, threads, run, result) " +
+    private final String DELETE_TEST = "DELETE FROM tests WHERE id = ?";
+    private final String INSERT_TEST = "INSERT INTO tests (hostname, test, threads, run, result) " +
             "VALUES (?, ?, ?, ?, ?)";
 
-    final JsonObject postgreSQLClientConfig = new JsonObject()
-            .put("host", "database")
-            .put("username", "pgrapher")
-            .put("password", "password")
-            .put("database", "pgrapher");
+    private final JsonObject postgreSQLClientConfig = new JsonObject()
+            .put("host", DATABASE_HOST)
+            .put("username", DATABASE_USER)
+            .put("password", DATABASE_PASS)
+            .put("database", DATABASE_NAME);
 
     private AsyncSQLClient client;
 
@@ -49,6 +60,23 @@ public class Grapher extends AbstractVerticle {
         });
     }
 
+    private void makeQuery(SQLConnection conn, HttpServerResponse response, String queryString) {
+        conn.query(queryString, query -> {
+            if (query.failed()) {
+                response.setStatusCode(500).end();
+            }
+            if (query.result().getNumRows() == 0) {
+                response.setStatusCode(404).end();
+            } else {
+                JsonArray array = new JsonArray();
+                query.result().getRows().forEach(array::add);
+                response.putHeader(HEADER_CONTENT_TYPE, APPLICATION_JSON)
+                        .putHeader(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, STAR)
+                        .end(array.encodePrettily());
+            }
+        });
+    }
+
     @Override
     public void start(Future<Void> future) {
         client = PostgreSQLClient.createShared(vertx, postgreSQLClientConfig);
@@ -56,7 +84,7 @@ public class Grapher extends AbstractVerticle {
             Router router = Router.router(vertx);
 
             router.route().handler(BodyHandler.create());
-            router.route("/static/*").handler(StaticHandler.create("webroot"));
+            router.route("/static/*").handler(StaticHandler.create(WEBROOT));
 
             router.route("/api/*").handler(ctx -> client.getConnection(res -> {
                 if (res.failed()) {
@@ -83,16 +111,7 @@ public class Grapher extends AbstractVerticle {
                 HttpServerResponse response = ctx.response();
                 SQLConnection conn = ctx.get("conn");
 
-                conn.query(SELECT_HOSTNAMES, query -> {
-                    if (query.failed()) {
-                        response.setStatusCode(500).end();
-                    } else {
-                        JsonArray array = new JsonArray();
-                        query.result().getRows().forEach(array::add);
-                        response.putHeader("content-type", "application/json")
-                                .end(array.encodePrettily());
-                    }
-                });
+                makeQuery(conn, response, SELECT_HOSTNAMES);
             });
 
 
@@ -100,16 +119,7 @@ public class Grapher extends AbstractVerticle {
                 HttpServerResponse response = ctx.response();
                 SQLConnection conn = ctx.get("conn");
 
-                conn.query(SELECT_TESTS, query -> {
-                    if (query.failed()) {
-                        response.setStatusCode(500).end();
-                    } else {
-                        JsonArray array = new JsonArray();
-                        query.result().getRows().forEach(array::add);
-                        response.putHeader("content-type", "application/json; charset=utf-8")
-                                .end(array.encodePrettily());
-                    }
-                });
+                makeQuery(conn, response, SELECT_TESTS);
             });
 
             router.get("/api/tests/:hostname").handler(ctx -> {
@@ -126,14 +136,12 @@ public class Grapher extends AbstractVerticle {
                         if (query.failed()) {
                             response.setStatusCode(500).end();
                         }
-
                         if (query.result().getNumRows() == 0) {
                             response.setStatusCode(404).end();
                         } else {
-                            JsonArray array = new JsonArray();
-                            query.result().getRows().forEach(array::add);
-                            response.putHeader("content-type", "application/json")
-                                    .end(array.encodePrettily());
+                            response.putHeader(HEADER_CONTENT_TYPE, APPLICATION_JSON)
+                                    .putHeader(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, STAR)
+                                    .end(query.result().getRows().get(0).encodePrettily());
                         }
                     });
                 }
