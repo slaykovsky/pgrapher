@@ -21,7 +21,7 @@ public class Grapher extends AbstractVerticle {
     private final String DATABASE_HOST = "database";
     private final String DATABASE_NAME = "pgrapher";
     private final String DATABASE_USER = "pgrapher";
-    private final String DATABASE_PASS = "pgrapher";
+    private final String DATABASE_PASS = "password";
 
     private final String INIT_DB = "CREATE TABLE IF NOT EXISTS tests " +
             "(id SERIAL, hostname TEXT, test TEXT, threads INT, run INT, result REAL)";
