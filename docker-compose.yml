@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  database:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: pgrapher
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pgrapher
+    ports:
+      - "5432:5432"
+
+  pgrapher:
+    image: slaykovsky/pgrapher:latest
+    ports:
+      - "80:80"
+    links:
+      - database
+    restart: always
