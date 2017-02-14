@@ -26,7 +26,7 @@ for run in 1 2 3
 do
   for threads in 1 2 4
   do
-    echo "Performing random read/write test #${run}"
+    echo "Performing random read/write test #${run}/${threads}"
     test="io"
     result_file="${TMP}/${test}_${threads}_${run}.result"
     sysbench --test=fileio --file-total-size=16G \
@@ -40,7 +40,7 @@ do
         ${PGRAPHER_API}
     rm -f ./test_file* ${result_file}
 
-    echo "Performing OLTP test"
+    echo "Performing OLTP test #${run}/${threads}"
     test="oltp"
     result_file="${TMP}/${test}_${threads}_${run}.result"
     sudo docker run --name sysbenchdb \
@@ -72,7 +72,7 @@ do
     sudo docker kill sysbenchdb
     sudo docker rm -f sysbenchdb
 
-    echo "Performing CPU test #${run}"
+    echo "Performing CPU test #${run}/${threads}"
     test="primes"
     result_file="${TMP}/${test}_${threads}_${run}r.result"
     sysbench --test=cpu \
@@ -85,7 +85,7 @@ do
         ${PGRAPHER_API}
     rm -f ./test_file* ${result_file}
 
-    echo "Performing RAM read test #${run}"
+    echo "Performing RAM read test #${run}/${threads}"
     test="ram_read"
     result_file="${TMP}/${test}_${threads}_${run}r.result"
     sysbench --test=memory \
@@ -101,7 +101,7 @@ do
         ${PGRAPHER_API}
     rm -f ./test_file* ${result_file}
 
-    echo "Performing RAM write test #${run}"
+    echo "Performing RAM write test #${run}/${threads}"
     test="ram_write"
     result_file="${TMP}/${test}_${threads}_${run}r.result"
     sysbench --test=memory \
