@@ -4,7 +4,8 @@ import io.vertx.core.*;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.asyncsql.AsyncSQLClient;
+import io.vertx.ext.asyncsql.PostgreSQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -23,12 +24,12 @@ public class Grapher extends AbstractVerticle {
             "VALUES (?, ?, ?, ?, ?)";
 
     final JsonObject postgreSQLClientConfig = new JsonObject()
-            .put("url", "jdbc:postgresql://database:5432/pgrapher")
-            .put("driver_class", "org.postgresql.Driver")
-            .put("user", "pgrapher")
-            .put("password", "password");
+            .put("host", "database")
+            .put("username", "pgrapher")
+            .put("password", "password")
+            .put("database", "pgrapher");
 
-    private JDBCClient client;
+    private AsyncSQLClient client;
 
     private void initialData(Handler<Void> done) {
         client.getConnection(res -> {
@@ -50,7 +51,7 @@ public class Grapher extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> future) {
-        client = JDBCClient.createShared(vertx, postgreSQLClientConfig);
+        client = PostgreSQLClient.createShared(vertx, postgreSQLClientConfig);
         initialData(ready -> {
             Router router = Router.router(vertx);
 
