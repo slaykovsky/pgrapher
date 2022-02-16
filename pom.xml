@@ -12,7 +12,7 @@
 
     <properties>
         <verticle.name>com.slaykovsky.pgrapher.Grapher</verticle.name>
-        <vertx.version>3.6.1</vertx.version>
+        <vertx.version>3.9.4</vertx.version>
     </properties>
 
 
